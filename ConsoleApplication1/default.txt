@@ -1,0 +1,50 @@
+
+
+//源代码报错
+
+
+error C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead.
+
+
+//以下是解决方法
+
+
+
+在定义FILE * fp 之后，fopen的用法是: fp = fopen(filename,"w")。而对于fopen_s来说，还得定义另外一个变量errno_t err，然后err = fopen_s(&fp,filename,"w")。返回值的话，对于fopen来说，打开文件成功的话返回文件指针（赋值给fp），打开失败则返回NULL值；对于fopen_s来说，打开文件成功返回0，失败返回非0。
+
+在vs编程中，经常会有这样的警告：warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use_CRT_SECURE_NO_WARNINGS. See online help for details.  是因为  fopen_s比fopen多了溢出检测，更安全一些。（在以后的文章里还有get与get_s的比较,strcpy strcpy_s的比较，他们的共同点都是用来一些不可预料的行为，以后将进行详尽解释）
+
+#include <stdio.h>
+
+FILE *stream, *stream2;
+
+int main( void )
+{
+   int numclosed;
+   errno_t err;
+
+   // Open for read (will fail if file "crt_fopen_s.c" does not exist)
+   if( (err  = fopen_s( &stream, "crt_fopen_s.c", "r" )) !=0 )
+      printf( "The file 'crt_fopen_s.c' was not opened\n" );
+   else
+      printf( "The file 'crt_fopen_s.c' was opened\n" );
+
+   // Open for write 
+   if( (err = fopen_s( &stream2, "data2", "w+" )) != 0 )
+      printf( "The file 'data2' was not opened\n" );
+   else
+      printf( "The file 'data2' was opened\n" );
+
+   // Close stream if it is not NULL 
+   if( stream)
+   {
+      if ( fclose( stream ) )
+      {
+         printf( "The file 'crt_fopen_s.c' was not closed\n" );
+      }
+   }
+
+   // All other files are closed:
+   numclosed = _fcloseall( );
+   printf( "Number of files closed by _fcloseall: %u\n", numclosed );
+}
